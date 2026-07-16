@@ -1,0 +1,7 @@
+# Abaikan folder upload gambar produk
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Abaikan file sistem OS
+.DS_Store
+Thumbs.db
