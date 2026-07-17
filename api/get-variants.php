@@ -1,5 +1,4 @@
 <?php
-// api/get-variants.php
 require_once '../config/database.php';
 header('Content-Type: application/json');
 

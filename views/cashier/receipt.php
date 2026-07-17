@@ -7,19 +7,25 @@ check_access(['admin', 'cashier']);
 
 $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-// Ambil data transaksi utama beserta nama kasir
-$stmt_order = $pdo->prepare("SELECT o.*, u.name as cashier_name FROM orders o JOIN users u ON o.user_id = u.id WHERE o.id = ?");
+// Ambil data transaksi JOIN dengan user(kasir) dan customers(pelanggan)
+$stmt_order = $pdo->prepare("
+    SELECT o.*, u.name as cashier_name, c.name as customer_name 
+    FROM orders o 
+    JOIN users u ON o.user_id = u.id 
+    LEFT JOIN customers c ON o.customer_id = c.id 
+    WHERE o.id = ?
+");
 $stmt_order->execute([$order_id]);
 $order = $stmt_order->fetch();
 
-if (!$order) {
-    die("Struk tidak ditemukan.");
-}
+if (!$order) die("Struk tidak ditemukan.");
 
-// Ambil data item belanja
 $stmt_details = $pdo->prepare("SELECT od.*, m.name as menu_name FROM order_details od JOIN menus m ON od.menu_id = m.id WHERE od.order_id = ?");
 $stmt_details->execute([$order_id]);
 $details = $stmt_details->fetchAll();
+
+// Hitung total poin yang didapat di struk ini (Jumlah semua qty)
+$earned_points = array_sum(array_column($details, 'qty'));
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -27,19 +33,9 @@ $details = $stmt_details->fetchAll();
     <meta charset="UTF-8">
     <title>Struk #<?= htmlspecialchars($order['invoice_number']) ?></title>
     <style>
-        /* Pengaturan ukuran kertas Printer Thermal 58mm */
         @page { margin: 0; }
-        body {
-            font-family: 'Courier New', Courier, monospace;
-            width: 58mm; /* Sesuaikan ke 80mm jika printernya lebar */
-            margin: 0 auto;
-            padding: 10px;
-            color: #000;
-            font-size: 12px;
-            line-height: 1.4;
-        }
+        body { font-family: 'Courier New', Courier, monospace; width: 58mm; margin: 0 auto; padding: 10px; color: #000; font-size: 12px; line-height: 1.4; }
         .text-center { text-align: center; }
-        .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
         .border-top { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
         .border-bottom { border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px; }
@@ -61,23 +57,23 @@ $details = $stmt_details->fetchAll();
         <div class="flex"><span>No:</span> <span><?= htmlspecialchars($order['invoice_number']) ?></span></div>
         <div class="flex"><span>Tgl:</span> <span><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></span></div>
         <div class="flex"><span>Kasir:</span> <span><?= htmlspecialchars($order['cashier_name']) ?></span></div>
+        
+        <?php if($order['customer_name']): ?>
+            <div class="flex font-bold"><span>Member:</span> <span><?= htmlspecialchars($order['customer_name']) ?></span></div>
+        <?php endif; ?>
     </div>
 
     <div class="border-bottom">
         <?php foreach ($details as $d): ?>
             <span class="item-name font-bold"><?= htmlspecialchars($d['menu_name']) ?></span>
-            
             <?php
-            // Ambil varian tiap item
             $stmt_var = $pdo->prepare("SELECT vo.option_name FROM order_detail_variants odv JOIN variant_options vo ON odv.variant_option_id = vo.id WHERE odv.order_detail_id = ?");
             $stmt_var->execute([$d['id']]);
             $variants = $stmt_var->fetchAll(PDO::FETCH_COLUMN);
-            
             if (!empty($variants)):
             ?>
                 <div class="variant-text">- <?= htmlspecialchars(implode(', ', $variants)) ?></div>
             <?php endif; ?>
-
             <div class="item-row">
                 <span><?= $d['qty'] ?>x @<?= number_format($d['price_at_sale'], 0, ',', '.') ?></span>
                 <span><?= number_format($d['total_price'], 0, ',', '.') ?></span>
@@ -95,6 +91,12 @@ $details = $stmt_details->fetchAll();
             <span style="text-transform:uppercase;"><?= htmlspecialchars($order['payment_method']) ?></span>
         </div>
     </div>
+
+    <?php if($order['customer_name']): ?>
+    <div class="text-center mb-2 font-bold" style="font-size: 11px; background: #eee; padding: 3px; border-radius: 4px;">
+        ✨ +<?= $earned_points ?> Poin Member Ditambahkan!
+    </div>
+    <?php endif; ?>
 
     <div class="text-center border-top font-bold mt-4">
         Terima Kasih!<br>

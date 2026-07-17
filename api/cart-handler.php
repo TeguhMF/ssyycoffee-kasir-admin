@@ -1,30 +1,23 @@
 <?php
-// api/cart-handler.php
 session_start();
 require_once '../config/database.php';
 
-// Atur header agar selalu mengembalikan format JSON
 header('Content-Type: application/json');
 
-// Inisialisasi array keranjang di dalam session jika belum ada
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Tangkap request data JSON dari JavaScript Fetch API
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? ($_GET['action'] ?? 'get');
 
 try {
-    // ---------------------------------------------------------
-    // AKSI 1: TAMBAH ITEM KE KERANJANG
-    // ---------------------------------------------------------
+
     if ($action === 'add') {
         $menu_id = intval($input['menu_id']);
         $qty = intval($input['qty'] ?? 1);
-        $variants = $input['variants'] ?? []; // Berisi array ID opsi varian terpilih
+        $variants = $input['variants'] ?? []; 
 
-        // 1. Cek apakah menu ada dan tersedia
         $stmt = $pdo->prepare("SELECT * FROM menus WHERE id = ? AND status = 'available'");
         $stmt->execute([$menu_id]);
         $menu = $stmt->fetch();
@@ -34,9 +27,7 @@ try {
         $price_at_sale = floatval($menu['base_price']);
         $variant_details = [];
 
-        // 2. Kalkulasi harga tambahan dari varian yang dipilih
         if (!empty($variants)) {
-            // Konversi array ke format aman untuk query IN()
             $inQuery = implode(',', array_map('intval', $variants));
             $stmt_var = $pdo->query("SELECT * FROM variant_options WHERE id IN ($inQuery)");
             $var_data = $stmt_var->fetchAll();
@@ -51,14 +42,11 @@ try {
             }
         }
 
-        // 3. Buat ID Keranjang Unik (Hash)
-        // Gabungkan ID menu dengan ID varian yang diurutkan agar konsisten
         sort($variants);
         $cart_id = $menu_id . '_' . implode('_', $variants);
 
-        // 4. Masukkan ke session keranjang
         if (isset($_SESSION['cart'][$cart_id])) {
-            $_SESSION['cart'][$cart_id]['qty'] += $qty; // Jika item identik sudah ada, tambah jumlahnya
+            $_SESSION['cart'][$cart_id]['qty'] += $qty;
         } else {
             $_SESSION['cart'][$cart_id] = [
                 'cart_id' => $cart_id,
@@ -75,9 +63,6 @@ try {
         exit;
     }
 
-    // ---------------------------------------------------------
-    // AKSI 2: UPDATE KUANTITAS ATAU HAPUS ITEM
-    // ---------------------------------------------------------
     if ($action === 'update_qty') {
         $cart_id = $input['cart_id'] ?? '';
         $qty = intval($input['qty']);
@@ -94,18 +79,12 @@ try {
         exit;
     }
 
-    // ---------------------------------------------------------
-    // AKSI 3: KOSONGKAN SELURUH KERANJANG
-    // ---------------------------------------------------------
     if ($action === 'clear') {
         $_SESSION['cart'] = [];
         echo json_encode(['status' => 'success', 'cart' => []]);
         exit;
     }
 
-    // ---------------------------------------------------------
-    // DEFAULT: AMBIL DATA KERANJANG SAAT INI
-    // ---------------------------------------------------------
     echo json_encode(['status' => 'success', 'cart' => array_values($_SESSION['cart'])]);
 
 } catch (Exception $e) {

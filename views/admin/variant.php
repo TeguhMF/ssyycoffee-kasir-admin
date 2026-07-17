@@ -1,5 +1,5 @@
 <?php
-// views/admin/variant.php
+
 require_once '../../config/database.php';
 require_once '../../helpers/auth.php';
 
@@ -8,7 +8,6 @@ check_access(['admin']);
 $msg = '';
 $menu_id = isset($_GET['menu_id']) ? intval($_GET['menu_id']) : 0;
 
-// Ambil info detail menu utama
 $stmt_menu = $pdo->prepare("SELECT m.*, c.name as category_name FROM menus m JOIN categories c ON m.category_id = c.id WHERE m.id = ?");
 $stmt_menu->execute([$menu_id]);
 $menu = $stmt_menu->fetch();
@@ -18,7 +17,6 @@ if (!$menu) {
     exit;
 }
 
-// A. LOGIKA TAMBAH GRUP VARIAN BARU (Misal: Size, Sugar)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_group'])) {
     $group_name = trim($_POST['group_name']);
     if (!empty($group_name)) {
@@ -28,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_group'])) {
     }
 }
 
-// B. LOGIKA TAMBAH OPSI VARIAN BARU (Misal: Large +Rp5.000)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_option'])) {
     $variant_group_id = intval($_POST['variant_group_id']);
     $option_name = trim($_POST['option_name']);
@@ -41,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_option'])) {
     }
 }
 
-// C. LOGIKA HAPUS GRUP ATAU OPSI
 if (isset($_GET['delete_group'])) {
     $group_id = intval($_GET['delete_group']);
     $stmt = $pdo->prepare("DELETE FROM variant_groups WHERE id = ? AND menu_id = ?");
@@ -58,7 +54,6 @@ if (isset($_GET['delete_option'])) {
     exit;
 }
 
-// D. AMBIL DATA STRUKTUR VARIAN DARI DATABASE
 $groups = $pdo->prepare("SELECT * FROM variant_groups WHERE menu_id = ? ORDER BY id ASC");
 $groups->execute([$menu_id]);
 $variant_groups = $groups->fetchAll();
@@ -66,7 +61,6 @@ $variant_groups = $groups->fetchAll();
 
 <?php include '../layouts/header.php'; ?>
 
-<!-- Top Bar navigasi balik -->
 <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
         <a href="menu.php" class="inline-flex items-center gap-2 text-xs font-bold text-coffee-600 uppercase tracking-wider mb-2 hover:text-coffee-800 transition-colors">
@@ -86,9 +80,7 @@ $variant_groups = $groups->fetchAll();
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
     
-    <!-- FORMS COLUMN -->
     <div class="space-y-6">
-        <!-- FORM 1: Tambah Grup Varian -->
         <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100">
             <h3 class="text-sm font-bold text-coffee-950 uppercase tracking-wider mb-4">1. Buat Grup Varian</h3>
             <form action="variant.php?menu_id=<?= $menu_id ?>" method="POST" class="space-y-4">
@@ -102,8 +94,6 @@ $variant_groups = $groups->fetchAll();
                 </button>
             </form>
         </div>
-
-        <!-- FORM 2: Tambah Opsi Varian (Hanya muncul jika sudah ada grup) -->
         <?php if (!empty($variant_groups)): ?>
         <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100">
             <h3 class="text-sm font-bold text-coffee-950 uppercase tracking-wider mb-4">2. Tambah Opsi ke Grup</h3>
@@ -132,8 +122,6 @@ $variant_groups = $groups->fetchAll();
         </div>
         <?php endif; ?>
     </div>
-
-    <!-- DISPLAY COLUMN: STRUKTUR VARIAN SAAT INI -->
     <div class="lg:col-span-2 space-y-4">
         <?php if (empty($variant_groups)): ?>
             <div class="bg-white p-8 rounded-3xl shadow-soft text-center text-coffee-600 border border-coffee-100">
@@ -142,14 +130,11 @@ $variant_groups = $groups->fetchAll();
         <?php endif; ?>
 
         <?php foreach($variant_groups as $group): ?>
-            <div class="bg-white rounded-2xl shadow-soft border border-coffee-100 overflow-hidden">
-                <!-- Header Grup -->
+            <div class="bg-white rounded-2xl shadow-soft border border-coffee-100 overflow-hidden">     
                 <div class="bg-coffee-50 px-6 py-4 border-b border-coffee-100 flex justify-between items-center">
                     <h4 class="font-bold text-coffee-950 text-sm uppercase tracking-wide">Grup: <?= htmlspecialchars($group['group_name']) ?></h4>
                     <a href="variant.php?menu_id=<?= $menu_id ?>&delete_group=<?= $group['id'] ?>" onclick="return confirm('Hapus grup ini beserta seluruh opsinya?')" class="text-xs font-semibold text-red-600 hover:underline">Hapus Grup</a>
-                </div>
-                
-                <!-- Daftar Opsi di dalam Grup ini -->
+                </div>           
                 <div class="p-4 divide-y divide-coffee-100">
                     <?php
                     $opt_stmt = $pdo->prepare("SELECT * FROM variant_options WHERE variant_group_id = ? ORDER BY id ASC");

@@ -1,5 +1,4 @@
 <?php
-// views/admin/menu.php
 require_once '../../config/database.php';
 require_once '../../helpers/auth.php';
 
@@ -7,7 +6,6 @@ check_access(['admin']);
 
 $msg = '';
 
-// A. LOGIKA PROSES TAMBAH MENU BARU
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_menu'])) {
     $name = trim($_POST['name']);
     $category_id = intval($_POST['category_id']);
@@ -35,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_menu'])) {
     }
 }
 
-// B. LOGIKA PROSES EDIT MENU
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_menu'])) {
     $menu_id = intval($_POST['menu_id']);
     $name = trim($_POST['name']);
@@ -43,13 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_menu'])) {
     $base_price = floatval($_POST['base_price']);
     $status = $_POST['status'] === 'empty' ? 'empty' : 'available';
 
-    // Persiapkan query dasar
     $update_query = "UPDATE menus SET category_id = ?, name = ?, base_price = ?, status = ?";
     $params = [$category_id, $name, $base_price, $status];
 
-    // Cek apakah ada foto baru yang diupload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        // Ambil info foto lama untuk dihapus
+    
         $stmt_old = $pdo->prepare("SELECT image FROM menus WHERE id = ?");
         $stmt_old->execute([$menu_id]);
         $old_img = $stmt_old->fetchColumn();
@@ -58,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_menu'])) {
             unlink('../../public/uploads/' . $old_img);
         }
 
-        // Proses foto baru
         $file_tmp = $_FILES['image']['tmp_name'];
         $file_ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
         $image_name = time() . '_edit_' . uniqid() . '.' . $file_ext;
@@ -68,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_menu'])) {
         $params[] = $image_name;
     }
 
-    // Eksekusi update
     $update_query .= " WHERE id = ?";
     $params[] = $menu_id;
 
@@ -77,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_menu'])) {
     $msg = "Data menu berhasil diperbarui!";
 }
 
-// C. LOGIKA HAPUS MENU
 if (isset($_GET['delete'])) {
     $delete_id = intval($_GET['delete']);
     $stmt_img = $pdo->prepare("SELECT image FROM menus WHERE id = ?");
@@ -95,7 +87,6 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// AMBIL DATA DARI DATABASE
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN categories c ON m.category_id = c.id ORDER BY m.id DESC")->fetchAll();
 ?>
@@ -118,7 +109,6 @@ $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN cate
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
     
-    <!-- KOLOM KIRI: FORM TAMBAH -->
     <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100">
         <h3 class="text-lg font-bold text-coffee-950 mb-4">Tambah Menu Baru</h3>
         <form action="menu.php" method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -145,7 +135,7 @@ $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN cate
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Status Awal</label>
+                <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Status</label>
                 <div class="flex gap-4 mt-1">
                     <label class="inline-flex items-center text-sm font-semibold">
                         <input type="radio" name="status" value="available" checked class="text-coffee-800 focus:ring-0 mr-2"> Tersedia
@@ -167,7 +157,6 @@ $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN cate
         </form>
     </div>
 
-    <!-- KOLOM KANAN: TABEL -->
     <div class="lg:col-span-2 bg-white rounded-3xl shadow-soft border border-coffee-100 overflow-hidden">
         <div class="p-6 border-b border-coffee-100">
             <h3 class="text-lg font-bold text-coffee-950">Katalog Produk Terdaftar</h3>
@@ -227,7 +216,6 @@ $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN cate
     </div>
 </div>
 
-<!-- MODAL EDIT MENU -->
 <div id="edit-modal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden flex flex-col">
         <div class="px-6 py-4 border-b border-coffee-100 flex justify-between items-center bg-coffee-50">
@@ -284,10 +272,9 @@ $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN cate
     </div>
 </div>
 
-<!-- SCRIPT UNTUK MODAL EDIT -->
 <script>
     function openEditModal(id, name, categoryId, basePrice, status) {
-        // Isi data ke dalam form modal
+  
         document.getElementById('edit_menu_id').value = id;
         document.getElementById('edit_name').value = name;
         document.getElementById('edit_category_id').value = categoryId;
@@ -299,7 +286,6 @@ $menus = $pdo->query("SELECT m.*, c.name as category_name FROM menus m JOIN cate
             document.getElementById('edit_status_empty').checked = true;
         }
 
-        // Tampilkan modal
         document.getElementById('edit-modal').classList.remove('hidden');
     }
 

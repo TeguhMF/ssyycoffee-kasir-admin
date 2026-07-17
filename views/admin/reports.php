@@ -1,16 +1,12 @@
 <?php
-// views/admin/reports.php
 require_once '../../config/database.php';
 require_once '../../helpers/auth.php';
 
-// Proteksi halaman: Hanya admin
 check_access(['admin']);
 
-// Mengatur nilai default untuk filter tanggal (Awal bulan sampai Hari ini)
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 
-// 1. Ambil Ringkasan (Summary) berdasarkan rentang tanggal
 $stmt_summary = $pdo->prepare("SELECT COUNT(id) as total_trx, SUM(grand_total) as total_income FROM orders WHERE DATE(created_at) >= ? AND DATE(created_at) <= ? AND status = 'completed'");
 $stmt_summary->execute([$start_date, $end_date]);
 $summary = $stmt_summary->fetch();
@@ -18,7 +14,7 @@ $summary = $stmt_summary->fetch();
 $total_trx = $summary['total_trx'] ?? 0;
 $total_income = $summary['total_income'] ?? 0;
 
-// 2. Ambil Daftar Transaksi berdasarkan rentang tanggal
+
 $stmt_orders = $pdo->prepare("SELECT o.*, u.name as cashier_name FROM orders o JOIN users u ON o.user_id = u.id WHERE DATE(o.created_at) >= ? AND DATE(o.created_at) <= ? AND o.status = 'completed' ORDER BY o.id DESC");
 $stmt_orders->execute([$start_date, $end_date]);
 $orders = $stmt_orders->fetchAll();
@@ -29,10 +25,8 @@ $orders = $stmt_orders->fetchAll();
 <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-4">
     <div>
         <h2 class="text-3xl font-extrabold text-coffee-950 tracking-tight">Laporan Penjualan</h2>
-        <p class="text-sm text-coffee-600 mt-1">Pantau riwayat transaksi dan hitung omzet berdasarkan periode waktu.</p>
     </div>
     
-    <!-- Form Filter Tanggal -->
     <form action="reports.php" method="GET" class="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-coffee-100">
         <div class="flex items-center gap-2 px-2">
             <span class="text-xs font-bold text-coffee-600">Dari:</span>
@@ -49,7 +43,6 @@ $orders = $stmt_orders->fetchAll();
     </form>
 </div>
 
-<!-- Ringkasan Periode Terpilih -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100 flex items-center justify-between">
         <div>
@@ -72,7 +65,6 @@ $orders = $stmt_orders->fetchAll();
     </div>
 </div>
 
-<!-- Tabel Riwayat Transaksi -->
 <div class="bg-white rounded-3xl shadow-soft border border-coffee-100 overflow-hidden">
     <div class="p-6 border-b border-coffee-100">
         <h3 class="text-lg font-bold text-coffee-950">Rincian Riwayat Transaksi</h3>
@@ -111,7 +103,7 @@ $orders = $stmt_orders->fetchAll();
                         </td>
                         <td class="p-4 text-right font-extrabold text-coffee-950">Rp <?= number_format($order['grand_total'], 0, ',', '.') ?></td>
                         <td class="p-4 text-center pr-6">
-                            <!-- Tombol Cetak Ulang Struk -->
+                     
                             <button onclick="reprintReceipt(<?= $order['id'] ?>)" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-coffee-100 text-coffee-800 rounded-xl hover:bg-coffee-200 transition-colors text-xs font-bold">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0v-2.25a2.25 2.25 0 0 1 2.25-2.25h6a2.25 2.25 0 0 1 2.25 2.25v2.25Z" /></svg>
                                 Struk
@@ -125,8 +117,6 @@ $orders = $stmt_orders->fetchAll();
 </div>
 
 <script>
-    // Fungsi JavaScript untuk me-reprint struk
-    // Menembak langsung ke file receipt kasir yang sudah kita buat sebelumnya
     function reprintReceipt(orderId) {
         window.open(`../cashier/receipt.php?id=${orderId}`, 'Struk Ulang', 'width=400,height=600');
     }

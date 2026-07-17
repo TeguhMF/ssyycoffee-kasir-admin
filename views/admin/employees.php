@@ -1,14 +1,11 @@
 <?php
-// views/admin/employees.php
 require_once '../../config/database.php';
 require_once '../../helpers/auth.php';
 
-// Proteksi halaman: Hanya admin
 check_access(['admin']);
 
 $msg = '';
 
-// A. LOGIKA TAMBAH KARYAWAN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $name = trim($_POST['name']);
     $username = strtolower(trim($_POST['username'])); // Username jadikan huruf kecil semua
@@ -16,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $role = $_POST['role'];
 
     if (!empty($name) && !empty($username) && !empty($password)) {
-        // Cek apakah username sudah ada
+        
         $stmt_check = $pdo->prepare("SELECT id FROM users WHERE username = ?");
         $stmt_check->execute([$username]);
         
@@ -33,15 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     }
 }
 
-// B. LOGIKA EDIT KARYAWAN
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $user_id = intval($_POST['user_id']);
     $name = trim($_POST['name']);
     $username = strtolower(trim($_POST['username']));
     $role = $_POST['role'];
-    $password = $_POST['password']; // Opsional
+    $password = $_POST['password']; 
 
-    // Cek agar username tidak bentrok dengan user lain
     $stmt_check = $pdo->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
     $stmt_check->execute([$username, $user_id]);
     
@@ -49,12 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
         $msg = "Gagal: Username '$username' sudah dipakai karyawan lain!";
     } else {
         if (!empty($password)) {
-            // Jika kolom password diisi, update passwordnya (Reset Password)
+        
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("UPDATE users SET name = ?, username = ?, role = ?, password = ? WHERE id = ?");
             $stmt->execute([$name, $username, $role, $hashed_password, $user_id]);
         } else {
-            // Jika tidak diisi, biarkan password lama
+            
             $stmt = $pdo->prepare("UPDATE users SET name = ?, username = ?, role = ? WHERE id = ?");
             $stmt->execute([$name, $username, $role, $user_id]);
         }
@@ -62,11 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     }
 }
 
-// C. LOGIKA HAPUS KARYAWAN
 if (isset($_GET['delete'])) {
     $delete_id = intval($_GET['delete']);
     
-    // Keamanan: Cegah admin menghapus dirinya sendiri yang sedang login
+
     if ($delete_id === $_SESSION['user_id']) {
         $msg = "Peringatan: Anda tidak dapat menghapus akun Anda sendiri!";
     } else {
@@ -77,7 +71,6 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// AMBIL DATA KARYAWAN DARI DATABASE
 $users = $pdo->query("SELECT * FROM users ORDER BY role ASC, name ASC")->fetchAll();
 ?>
 
@@ -139,7 +132,6 @@ $users = $pdo->query("SELECT * FROM users ORDER BY role ASC, name ASC")->fetchAl
         </form>
     </div>
 
-    <!-- KOLOM KANAN: TABEL KARYAWAN -->
     <div class="lg:col-span-2 bg-white rounded-3xl shadow-soft border border-coffee-100 overflow-hidden">
         <div class="p-6 border-b border-coffee-100">
             <h3 class="text-lg font-bold text-coffee-950">Daftar Pengguna Sistem</h3>
@@ -190,8 +182,7 @@ $users = $pdo->query("SELECT * FROM users ORDER BY role ASC, name ASC")->fetchAl
         </div>
     </div>
 </div>
-
-<!-- MODAL EDIT KARYAWAN -->
+>
 <div id="edit-modal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden flex flex-col">
         <div class="px-6 py-4 border-b border-coffee-100 flex justify-between items-center bg-coffee-50">

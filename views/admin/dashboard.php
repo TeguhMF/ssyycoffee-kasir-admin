@@ -1,37 +1,32 @@
 <?php
-// views/admin/dashboard.php
+
 require_once '../../config/database.php';
 require_once '../../helpers/auth.php';
 
-// Proteksi: Hanya Admin
 check_access(['admin']);
 
-// 1. STATISTIK HARI INI
 $today = date('Y-m-d');
 $month = date('m');
 $year = date('Y');
 
-// Total Omzet Hari Ini
 $stmt_omzet = $pdo->prepare("SELECT SUM(grand_total) FROM orders WHERE DATE(created_at) = ? AND status = 'completed'");
 $stmt_omzet->execute([$today]);
 $omzet_hari_ini = $stmt_omzet->fetchColumn() ?: 0;
 
-// Jumlah Transaksi Hari Ini
+
 $stmt_trx = $pdo->prepare("SELECT COUNT(id) FROM orders WHERE DATE(created_at) = ? AND status = 'completed'");
 $stmt_trx->execute([$today]);
 $trx_hari_ini = $stmt_trx->fetchColumn() ?: 0;
 
-// Total Item Terjual Hari Ini
 $stmt_item = $pdo->prepare("SELECT SUM(od.qty) FROM order_details od JOIN orders o ON od.order_id = o.id WHERE DATE(o.created_at) = ? AND o.status = 'completed'");
 $stmt_item->execute([$today]);
 $item_hari_ini = $stmt_item->fetchColumn() ?: 0;
 
-// Total Omzet Bulan Ini
 $stmt_omzet_bulan = $pdo->prepare("SELECT SUM(grand_total) FROM orders WHERE MONTH(created_at) = ? AND YEAR(created_at) = ? AND status = 'completed'");
 $stmt_omzet_bulan->execute([$month, $year]);
 $omzet_bulan_ini = $stmt_omzet_bulan->fetchColumn() ?: 0;
 
-// 2. DATA GRAFIK PENJUALAN (7 HARI TERAKHIR)
+
 $chart_labels = [];
 $chart_data = [];
 for ($i = 6; $i >= 0; $i--) {
@@ -44,34 +39,28 @@ for ($i = 6; $i >= 0; $i--) {
     $chart_data[] = $val;
 }
 
-// 3. TRANSAKSI TERBARU (5 Terakhir)
 $stmt_latest = $pdo->query("SELECT o.*, u.name as cashier_name FROM orders o JOIN users u ON o.user_id = u.id WHERE o.status = 'completed' ORDER BY o.id DESC LIMIT 5");
 $latest_orders = $stmt_latest->fetchAll();
 ?>
 
 <?php include '../layouts/header.php'; ?>
 
-<!-- Header Dashboard -->
 <div class="mb-8">
-    <h2 class="text-3xl font-extrabold text-coffee-950 tracking-tight">Ikhtisar Bisnis</h2>
-    <p class="text-sm text-coffee-600 mt-1">Pantau performa penjualan SsyyCoffee hari ini secara real-time.</p>
+    <h2 class="text-3xl font-extrabold text-coffee-950 tracking-tight">Dashboard</h2>
 </div>
 
-<!-- Grid 4 Kartu Statistik -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
     
-    <!-- Card 1: Omzet Hari Ini -->
     <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100 flex items-center gap-5">
         <div class="w-14 h-14 rounded-2xl bg-coffee-100 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-coffee-800"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
         </div>
         <div>
-            <p class="text-xs font-bold text-coffee-600 uppercase tracking-wider mb-1">Omzet Hari Ini</p>
+            <p class="text-xs font-bold text-coffee-600 uppercase tracking-wider mb-1">Pendapatan Hari Ini</p>
             <h3 class="text-2xl font-extrabold text-coffee-950">Rp <?= number_format($omzet_hari_ini, 0, ',', '.') ?></h3>
         </div>
     </div>
 
-    <!-- Card 2: Jumlah Transaksi -->
     <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100 flex items-center gap-5">
         <div class="w-14 h-14 rounded-2xl bg-coffee-100 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-coffee-800"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
@@ -82,7 +71,6 @@ $latest_orders = $stmt_latest->fetchAll();
         </div>
     </div>
 
-    <!-- Card 3: Item Terjual -->
     <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100 flex items-center gap-5">
         <div class="w-14 h-14 rounded-2xl bg-coffee-100 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-coffee-800"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
@@ -93,7 +81,6 @@ $latest_orders = $stmt_latest->fetchAll();
         </div>
     </div>
 
-    <!-- Card 4: Omzet Bulan Ini -->
     <div class="bg-coffee-950 p-6 rounded-3xl shadow-soft border border-coffee-800 flex items-center gap-5 relative overflow-hidden">
         <div class="absolute -right-4 -top-4 opacity-10">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-32 h-32 text-white"><path fill-rule="evenodd" d="M2.25 13.5a8.25 8.25 0 0 1 8.25-8.25.75.75 0 0 1 .75.75v6.75H18a.75.75 0 0 1 .75.75 8.25 8.25 0 0 1-16.5 0Z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M12.75 3a.75.75 0 0 1 .75-.75 8.25 8.25 0 0 1 8.25 8.25.75.75 0 0 1-.75.75h-7.5a.75.75 0 0 1-.75-.75V3Z" clip-rule="evenodd" /></svg>
@@ -109,10 +96,8 @@ $latest_orders = $stmt_latest->fetchAll();
 
 </div>
 
-<!-- Area Bawah: Grafik & Tabel Terbaru -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     
-    <!-- Grafik Penjualan (Kiri, Lebih Lebar) -->
     <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-soft border border-coffee-100">
         <h3 class="text-lg font-bold text-coffee-950 mb-6">Tren Penjualan (7 Hari Terakhir)</h3>
         <div class="relative h-72 w-full">
@@ -120,7 +105,6 @@ $latest_orders = $stmt_latest->fetchAll();
         </div>
     </div>
 
-    <!-- Transaksi Terbaru (Kanan) -->
     <div class="bg-white p-6 rounded-3xl shadow-soft border border-coffee-100 flex flex-col">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-bold text-coffee-950">Transaksi Terbaru</h3>
@@ -153,12 +137,10 @@ $latest_orders = $stmt_latest->fetchAll();
 
 </div>
 
-<!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const ctx = document.getElementById('salesChart').getContext('2d');
     
-    // Data dari PHP
     const labels = <?= json_encode($chart_labels) ?>;
     const data = <?= json_encode($chart_data) ?>;
 
@@ -169,8 +151,8 @@ $latest_orders = $stmt_latest->fetchAll();
             datasets: [{
                 label: 'Omzet Penjualan (Rp)',
                 data: data,
-                borderColor: '#5C3A21', // text-coffee-800
-                backgroundColor: 'rgba(140, 98, 57, 0.1)', // bg-coffee-600 with opacity
+                borderColor: '#5C3A21',
+                backgroundColor: 'rgba(140, 98, 57, 0.1)', 
                 borderWidth: 3,
                 pointBackgroundColor: '#2B1704',
                 pointBorderColor: '#fff',
@@ -178,7 +160,7 @@ $latest_orders = $stmt_latest->fetchAll();
                 pointRadius: 5,
                 pointHoverRadius: 7,
                 fill: true,
-                tension: 0.4 // Membuat garis melengkung halus
+                tension: 0.4
             }]
         },
         options: {

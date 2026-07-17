@@ -1,5 +1,4 @@
 <?php
-// login.php
 session_start();
 require_once 'config/database.php';
 
@@ -9,13 +8,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($username) && !empty($password)) {
         try {
-            // Cari user berdasarkan username
             $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
             $stmt->execute([$username]);
             $user = $stmt->fetch();
 
             if ($user) {
-                // DEBUG 1: Username ketemu. Mari cek password.
                 if (password_verify($password, $user['password'])) {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
@@ -35,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'DEBUG: USERNAME tidak ditemukan di tabel database.';
             }
         } catch (PDOException $e) {
-            // DEBUG 2: Menangkap jika ada error query/koneksi
             $error = 'DATABASE ERROR: ' . $e->getMessage();
         }
     } else {
@@ -76,13 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="bg-coffee-50 min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-soft">
-        <!-- Header Brand -->
         <div class="text-center mb-8">
             <h2 class="text-3xl font-extrabold text-coffee-950 tracking-tight">SsyyCoffee</h2>
             <p class="text-sm text-coffee-600 mt-2">Point of Sale & Management System</p>
         </div>
 
-        <!-- Notifikasi Error -->
         <?php if (!empty($error)): ?>
             <div class="mb-5 p-4 bg-red-50 border border-red-100 text-red-700 text-sm rounded-2xl flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -92,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <!-- Form Login -->
         <form action="login.php" method="POST" class="space-y-5">
             <div>
                 <label for="username" class="block text-xs font-bold text-coffee-950 uppercase tracking-wider mb-2">Username</label>
@@ -110,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button type="submit" 
                 class="w-full py-3.5 bg-coffee-800 hover:bg-coffee-950 text-white font-semibold rounded-xl shadow-md transition-all text-sm mt-2">
-                Masuk ke Sistem
+                Masuk
             </button>
         </form>
     </div>

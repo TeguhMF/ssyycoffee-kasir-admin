@@ -40,8 +40,8 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
         <div class="flex items-center gap-3">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-coffee-950"><path d="M4 19V6.2C4 5.09543 4.89543 4 6 4H15C16.1046 4 17 4.89543 17 6.2V19H4ZM6 2H15C17.2091 2 19 3.79086 19 6.2V15C20.6569 15 22 13.6569 22 12C22 10.3431 20.6569 9 19 9V7C21.7614 7 24 9.23858 24 12C24 14.7614 21.7614 17 19 17H17V19C17 20.6569 15.6569 22 14 22H7C5.34315 22 4 20.6569 4 19V21H2V19H0V17H2V6.2C2 3.79086 3.79086 2 6 2Z"/></svg>
             <div>
-                <h1 class="text-lg font-extrabold text-coffee-950 leading-none">SsyyCoffee POS</h1>
-                <p class="text-[10px] text-coffee-600 font-medium uppercase mt-0.5">Terminal Kasir</p>
+                <h1 class="text-lg font-extrabold text-coffee-950 leading-none">SsyyCoffee Menu</h1>
+                <p class="text-[10px] text-coffee-600 font-medium uppercase mt-0.5">Sistem Kasir</p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -146,20 +146,32 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
     </div>
 
     <!-- MODAL CHECKOUT -->
+<!-- MODAL CHECKOUT -->
     <div id="checkout-modal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <!-- (Isi modal checkout sama seperti sebelumnya) -->
         <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden flex flex-col">
+            
+            <!-- HEADER MODAL -->
             <div class="px-6 py-4 border-b border-coffee-100 flex justify-between items-center bg-coffee-50">
                 <h3 class="font-bold text-lg text-coffee-950">Konfirmasi Pembayaran</h3>
                 <button onclick="closeCheckoutModal()" class="text-coffee-600 hover:text-red-600">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                 </button>
             </div>
+            
+            <!-- BODY MODAL -->
             <div class="p-6 space-y-5">
                 <div class="text-center p-4 bg-coffee-50 rounded-2xl border border-coffee-100">
                     <p class="text-xs font-bold text-coffee-600 uppercase mb-1">Total Tagihan</p>
                     <h2 id="checkout-total-display" class="text-3xl font-extrabold text-coffee-950">Rp 0</h2>
                 </div>
+
+                <!-- Form Input Member -->
+                <div>
+                    <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Nomor HP Member <span class="text-[10px] text-coffee-600 normal-case">(Opsional)</span></label>
+                    <input type="text" id="customer-phone" placeholder="Ketik 08..." class="w-full px-4 py-3 bg-white border border-coffee-200 rounded-xl text-sm font-semibold text-coffee-950 focus:outline-none focus:border-coffee-600">
+                    <p class="text-[10px] text-coffee-600 mt-1 italic">*Jika nomor baru, otomatis terdaftar sbg member. (+1 Poin/Item)</p>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-coffee-950 uppercase mb-3">Metode Pembayaran</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -177,6 +189,8 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
                         </label>
                     </div>
                 </div>
+
+                <!-- Input Tunai -->
                 <div id="cash-input-section" class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Uang Diterima (Rp)</label>
@@ -188,11 +202,14 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
                     </div>
                 </div>
             </div>
+
+            <!-- FOOTER MODAL (Tombol Proses) -->
             <div class="p-5 border-t border-coffee-100 bg-white">
                 <button onclick="processCheckout()" class="w-full py-3.5 bg-coffee-800 text-white text-sm font-bold rounded-xl shadow-md hover:bg-coffee-950">
                     Proses Transaksi & Cetak Struk
                 </button>
             </div>
+            
         </div>
     </div>
 
@@ -394,27 +411,69 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
             }
         }
 
-        async function processCheckout() {
-            const method = document.querySelector('input[name="payment_method"]:checked').value;
-            if (method === 'cash') {
-                const tendered = parseFloat(document.getElementById('cash-tendered').value) || 0;
-                if (tendered < currentGrandTotal) { alert("Uang tunai tidak cukup!"); return; }
+async function processCheckout() {
+            // 1. Ambil metode pembayaran
+            const methodElement = document.querySelector('input[name="payment_method"]:checked');
+            if (!methodElement) {
+                alert("Silakan pilih metode pembayaran.");
+                return;
             }
+            const method = methodElement.value;
+            
+            // 2. Ambil nilai input nomor HP secara aman
+            const phoneInput = document.getElementById('customer-phone');
+            const phone = phoneInput ? phoneInput.value : '';
+            
+            // 3. Validasi Uang Tunai
+            if (method === 'cash') {
+                const tenderedInput = document.getElementById('cash-tendered');
+                const tendered = parseFloat(tenderedInput.value) || 0;
+                
+                if (tendered < currentGrandTotal) {
+                    alert("Nominal uang tunai yang diterima kurang dari total tagihan!");
+                    return;
+                }
+            }
+
+            // 4. Proses tembak API
             try {
+                // Ubah teks tombol menjadi loading sementara
+                const btn = event.currentTarget || document.querySelector('button[onclick="processCheckout()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Memproses...';
+                btn.disabled = true;
+
                 const response = await fetch('../../api/order-handler.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'checkout', payment_method: method })
+                    body: JSON.stringify({ 
+                        action: 'checkout', 
+                        payment_method: method, 
+                        customer_phone: phone 
+                    })
                 });
+                
                 const data = await response.json();
+                
+                // Kembalikan tombol seperti semula
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
                 if (data.status === 'success') {
+                    // Tutup modal dan refresh keranjang
                     closeCheckoutModal();
                     fetchCartInitial(); 
-                    window.open(`receipt.php?id=${data.order_id}`, 'Struk', 'width=400,height=600');
-                } else alert(data.message);
-            } catch (error) { console.error("Gagal", error); }
+                    
+                    // Buka pop-up struk
+                    window.open(`receipt.php?id=${data.order_id}`, 'Struk Pembayaran', 'width=400,height=600');
+                } else {
+                    alert("Gagal: " + data.message);
+                }
+            } catch (error) {
+                console.error("Gagal memproses pembayaran:", error);
+                alert("Terjadi kesalahan sistem saat memproses pembayaran. Cek koneksi atau database.");
+            }
         }
-
         window.addEventListener('DOMContentLoaded', fetchCartInitial);
     </script>
 </body>
