@@ -1,6 +1,6 @@
 # Sistem Point of Sale (POS) SsyyCoffee
 
-## Ringkasan Proyek
+##
 SsyyCoffee adalah aplikasi web Point of Sale (POS) *full-stack* yang tangguh, dirancang khusus untuk operasional kedai kopi. Dikembangkan menggunakan PHP *native* dan Tailwind CSS, sistem ini memfasilitasi pemrosesan transaksi yang mulus, manajemen varian produk dinamis, pelaporan pendapatan komprehensif, dan program loyalitas pelanggan yang terintegrasi.
 
 ## Fitur Utama
