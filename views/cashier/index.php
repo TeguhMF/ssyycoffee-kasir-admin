@@ -63,7 +63,6 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
             <!-- FILTER KATEGORI -->
             <div class="bg-white/60 backdrop-blur-md border-b border-coffee-100 p-4 shrink-0 overflow-x-auto whitespace-nowrap">
                 <div class="flex gap-2">
-                    <!-- Tombol 'Semua' aktif secara default -->
                     <button onclick="filterCategory('all', this)" class="cat-btn px-5 py-2 bg-coffee-950 text-white text-xs font-bold rounded-full shadow-sm transition-colors">Semua</button>
                     <?php foreach($categories as $cat): ?>
                         <button onclick="filterCategory(<?= $cat['id'] ?>, this)" class="cat-btn px-5 py-2 bg-white text-coffee-800 border border-coffee-200 text-xs font-bold rounded-full hover:bg-coffee-100 transition-colors">
@@ -76,7 +75,6 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
             <div class="flex-1 overflow-y-auto p-4 md:p-6 content-start">
                 <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" id="menu-grid">
                     <?php foreach($menus as $m): ?>
-                        <!-- Tambahkan data-category dan class menu-card -->
                         <div class="menu-card bg-white rounded-2xl p-3 border border-coffee-100 shadow-sm hover:border-coffee-600 hover:shadow-md transition-all cursor-pointer group block" 
                              data-category="<?= $m['category_id'] ?>"
                              onclick="checkVariants(<?= $m['id'] ?>, '<?= addslashes($m['name']) ?>', <?= $m['base_price'] ?>)">
@@ -97,7 +95,7 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
             </div>
         </main>
 
-        <!-- ZONA KANAN: KERANJANG BELANJA (Tidak ada perubahan HTML) -->
+        <!-- ZONA KANAN: KERANJANG BELANJA -->
         <aside class="w-full lg:w-96 bg-white border-l border-coffee-200 flex flex-col h-[50vh] lg:h-auto shadow-soft lg:shadow-none z-10 shrink-0">
             <div class="px-5 py-4 border-b border-coffee-100 flex justify-between items-center bg-white shrink-0">
                 <h2 class="font-extrabold text-coffee-950 text-lg">Pesanan Saat Ini</h2>
@@ -125,7 +123,6 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
 
     <!-- MODAL VARIAN -->
     <div id="variant-modal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <!-- (Isi modal varian sama seperti sebelumnya) -->
         <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden flex flex-col max-h-full">
             <div class="px-6 py-4 border-b border-coffee-100 flex justify-between items-center bg-coffee-50">
                 <div>
@@ -146,11 +143,9 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
     </div>
 
     <!-- MODAL CHECKOUT -->
-<!-- MODAL CHECKOUT -->
     <div id="checkout-modal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden flex flex-col">
             
-            <!-- HEADER MODAL -->
             <div class="px-6 py-4 border-b border-coffee-100 flex justify-between items-center bg-coffee-50">
                 <h3 class="font-bold text-lg text-coffee-950">Konfirmasi Pembayaran</h3>
                 <button onclick="closeCheckoutModal()" class="text-coffee-600 hover:text-red-600">
@@ -158,18 +153,26 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
                 </button>
             </div>
             
-            <!-- BODY MODAL -->
             <div class="p-6 space-y-5">
                 <div class="text-center p-4 bg-coffee-50 rounded-2xl border border-coffee-100">
                     <p class="text-xs font-bold text-coffee-600 uppercase mb-1">Total Tagihan</p>
                     <h2 id="checkout-total-display" class="text-3xl font-extrabold text-coffee-950">Rp 0</h2>
                 </div>
 
-                <!-- Form Input Member -->
-                <div>
-                    <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Nomor HP Member <span class="text-[10px] text-coffee-600 normal-case">(Opsional)</span></label>
-                    <input type="text" id="customer-phone" placeholder="Ketik 08..." class="w-full px-4 py-3 bg-white border border-coffee-200 rounded-xl text-sm font-semibold text-coffee-950 focus:outline-none focus:border-coffee-600">
-                    <p class="text-[10px] text-coffee-600 mt-1 italic">*Jika nomor baru, otomatis terdaftar sbg member. (+1 Poin/Item)</p>
+                <!-- Form Input Member & Cek Poin -->
+                <div class="bg-coffee-50/50 p-4 rounded-2xl border border-coffee-100">
+                    <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Member / Poin Loyalty</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="customer-phone" placeholder="Ketik 08..." class="flex-1 px-4 py-2.5 bg-white border border-coffee-200 rounded-xl text-sm font-semibold text-coffee-950 focus:outline-none focus:border-coffee-600">
+                        <button type="button" onclick="checkMemberPoints()" class="px-4 py-2.5 bg-coffee-800 text-white text-sm font-bold rounded-xl hover:bg-coffee-950 transition-colors">
+                            Cek
+                        </button>
+                    </div>
+                    
+                    <div id="member-result" class="hidden text-sm bg-white p-3 rounded-xl border border-coffee-200">
+                        <!-- Konten diisi oleh JavaScript -->
+                    </div>
+                    <p class="text-[10px] text-coffee-600 mt-2 italic">*+50 Poin/item. Min. 10.000 Poin untuk diskon.</p>
                 </div>
 
                 <div>
@@ -190,7 +193,6 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
                     </div>
                 </div>
 
-                <!-- Input Tunai -->
                 <div id="cash-input-section" class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-coffee-950 uppercase mb-2">Uang Diterima (Rp)</label>
@@ -203,7 +205,6 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
                 </div>
             </div>
 
-            <!-- FOOTER MODAL (Tombol Proses) -->
             <div class="p-5 border-t border-coffee-100 bg-white">
                 <button onclick="processCheckout()" class="w-full py-3.5 bg-coffee-800 text-white text-sm font-bold rounded-xl shadow-md hover:bg-coffee-950">
                     Proses Transaksi & Cetak Struk
@@ -213,42 +214,41 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
         </div>
     </div>
 
-    <!-- JAVASCRIPT LENGKAP -->
+    <!-- JAVASCRIPT LENGKAP & BERSIH -->
     <script>
-        // ----------------------------------------------------
-        // FITUR BARU: FILTER KATEGORI MENU
-        // ----------------------------------------------------
+        // 1. VARIABEL GLOBAL
+        let currentMenuId = null;
+        let currentGrandTotal = 0;
+        let finalGrandTotal = 0; // Digunakan untuk menghitung total setelah diskon poin
+        let isRedeemingPoints = false;
+        const discountNominal = 10000;
+
+        // 2. FORMAT RUPIAH
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        };
+
+        // 3. FITUR KATEGORI MENU
         function filterCategory(categoryId, btnElement) {
-            // 1. Reset desain semua tombol kategori jadi putih (tidak aktif)
             const allBtns = document.querySelectorAll('.cat-btn');
             allBtns.forEach(btn => {
                 btn.classList.remove('bg-coffee-950', 'text-white', 'border-transparent');
                 btn.classList.add('bg-white', 'text-coffee-800', 'border-coffee-200');
             });
-
-            // 2. Jadikan tombol yang diklik warna gelap (aktif)
             btnElement.classList.remove('bg-white', 'text-coffee-800', 'border-coffee-200');
             btnElement.classList.add('bg-coffee-950', 'text-white', 'border-transparent');
 
-            // 3. Saring Card Produk di Grid
             const allCards = document.querySelectorAll('.menu-card');
             allCards.forEach(card => {
                 if (categoryId === 'all' || card.getAttribute('data-category') == categoryId) {
-                    card.style.display = 'block'; // Tampilkan
+                    card.style.display = 'block'; 
                 } else {
-                    card.style.display = 'none';  // Sembunyikan
+                    card.style.display = 'none';
                 }
             });
         }
-        // ----------------------------------------------------
 
-        let currentMenuId = null;
-        let currentGrandTotal = 0;
-
-        const formatRupiah = (number) => {
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-        };
-
+        // 4. MANAJEMEN VARIAN & CART API
         async function checkVariants(menuId, menuName, basePrice) {
             try {
                 const response = await fetch(`../../api/get-variants.php?menu_id=${menuId}`);
@@ -383,24 +383,84 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
             document.getElementById('cart-total').innerText = formatRupiah(currentGrandTotal);
         }
 
+        // 5. MANAJEMEN CHECKOUT & LOYALTY
         function openCheckoutModal() {
             if (currentGrandTotal === 0) { alert("Keranjang kosong!"); return; }
-            document.getElementById('checkout-total-display').innerText = formatRupiah(currentGrandTotal);
+            
+            isRedeemingPoints = false;
+            finalGrandTotal = currentGrandTotal;
+            
+            document.getElementById('checkout-total-display').innerText = formatRupiah(finalGrandTotal);
+            document.getElementById('customer-phone').value = '';
+            document.getElementById('member-result').classList.add('hidden');
+            document.getElementById('member-result').innerHTML = '';
             document.getElementById('cash-tendered').value = '';
             document.getElementById('cash-change').innerText = 'Rp 0';
+            
+            // Reset metode pembayaran ke cash sebagai default
+            document.querySelector('input[name="payment_method"][value="cash"]').checked = true;
+            toggleCashInput();
+
             document.getElementById('checkout-modal').classList.remove('hidden');
         }
 
-        function closeCheckoutModal() { document.getElementById('checkout-modal').classList.add('hidden'); }
+        function closeCheckoutModal() { 
+            document.getElementById('checkout-modal').classList.add('hidden'); 
+        }
 
         function toggleCashInput() {
             const method = document.querySelector('input[name="payment_method"]:checked').value;
             document.getElementById('cash-input-section').classList.toggle('hidden', method !== 'cash');
         }
 
+        async function checkMemberPoints() {
+            const phone = document.getElementById('customer-phone').value.trim();
+            const resultBox = document.getElementById('member-result');
+            
+            if (!phone) return;
+            
+            resultBox.innerHTML = '<span class="text-coffee-600 text-xs">Mencari data...</span>';
+            resultBox.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`../../api/check-member.php?phone=${phone}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    let html = `<div class="font-bold text-coffee-950 mb-1">${data.data.name}</div>
+                                <div class="text-xs text-amber-600 font-bold mb-2">Total Poin: ${data.data.points.toLocaleString('id-ID')}</div>`;
+                    
+                    if (data.data.points >= 10000) {
+                        html += `
+                        <label class="flex items-center gap-2 mt-2 pt-2 border-t border-coffee-100 cursor-pointer">
+                            <input type="checkbox" id="use-points-checkbox" onchange="togglePointRedemption(this.checked)" class="w-4 h-4 text-coffee-800 rounded">
+                            <span class="text-xs font-bold text-green-700">Tukar 10.000 Poin (Diskon Rp 10.000)</span>
+                        </label>`;
+                    } else {
+                        html += `<div class="text-[10px] text-coffee-500">Poin belum cukup untuk ditukar (Min. 10.000).</div>`;
+                    }
+                    resultBox.innerHTML = html;
+                } else {
+                    resultBox.innerHTML = `<span class="text-xs font-bold text-coffee-600">Nomor Baru. Akan otomatis didaftarkan setelah bayar.</span>`;
+                }
+            } catch (error) {
+                resultBox.innerHTML = '<span class="text-xs text-red-500">Gagal mengecek server.</span>';
+            }
+        }
+
+        function togglePointRedemption(isChecked) {
+            isRedeemingPoints = isChecked;
+            finalGrandTotal = isChecked ? currentGrandTotal - discountNominal : currentGrandTotal;
+            
+            if (finalGrandTotal < 0) finalGrandTotal = 0; 
+            
+            document.getElementById('checkout-total-display').innerText = formatRupiah(finalGrandTotal);
+            calculateChange(); 
+        }
+
         function calculateChange() {
             const tendered = parseFloat(document.getElementById('cash-tendered').value) || 0;
-            const change = tendered - currentGrandTotal;
+            const change = tendered - finalGrandTotal;
             const el = document.getElementById('cash-change');
             if (change >= 0) {
                 el.innerText = formatRupiah(change);
@@ -411,33 +471,27 @@ $menus = $pdo->query("SELECT * FROM menus WHERE status = 'available' ORDER BY id
             }
         }
 
-async function processCheckout() {
-            // 1. Ambil metode pembayaran
+        async function processCheckout() {
             const methodElement = document.querySelector('input[name="payment_method"]:checked');
             if (!methodElement) {
                 alert("Silakan pilih metode pembayaran.");
                 return;
             }
             const method = methodElement.value;
-            
-            // 2. Ambil nilai input nomor HP secara aman
             const phoneInput = document.getElementById('customer-phone');
             const phone = phoneInput ? phoneInput.value : '';
             
-            // 3. Validasi Uang Tunai
             if (method === 'cash') {
                 const tenderedInput = document.getElementById('cash-tendered');
                 const tendered = parseFloat(tenderedInput.value) || 0;
                 
-                if (tendered < currentGrandTotal) {
+                if (tendered < finalGrandTotal) {
                     alert("Nominal uang tunai yang diterima kurang dari total tagihan!");
                     return;
                 }
             }
 
-            // 4. Proses tembak API
             try {
-                // Ubah teks tombol menjadi loading sementara
                 const btn = event.currentTarget || document.querySelector('button[onclick="processCheckout()"]');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = 'Memproses...';
@@ -449,22 +503,19 @@ async function processCheckout() {
                     body: JSON.stringify({ 
                         action: 'checkout', 
                         payment_method: method, 
-                        customer_phone: phone 
+                        customer_phone: phone,
+                        redeem_points: isRedeemingPoints 
                     })
                 });
                 
                 const data = await response.json();
                 
-                // Kembalikan tombol seperti semula
                 btn.innerHTML = originalText;
                 btn.disabled = false;
 
                 if (data.status === 'success') {
-                    // Tutup modal dan refresh keranjang
                     closeCheckoutModal();
                     fetchCartInitial(); 
-                    
-                    // Buka pop-up struk
                     window.open(`receipt.php?id=${data.order_id}`, 'Struk Pembayaran', 'width=400,height=600');
                 } else {
                     alert("Gagal: " + data.message);
@@ -474,6 +525,8 @@ async function processCheckout() {
                 alert("Terjadi kesalahan sistem saat memproses pembayaran. Cek koneksi atau database.");
             }
         }
+
+        // 6. INITIALIZE
         window.addEventListener('DOMContentLoaded', fetchCartInitial);
     </script>
 </body>
